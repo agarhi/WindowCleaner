@@ -65,4 +65,8 @@ oc delete deploymentconfigs sb-ms-ms
 oc delete svc sb-ms-ms
 oc delete pod <pod-name>
 
-
+# Some helpful curl commands to invoke the application
+## This command prints both JSESSIONID cookie and auth token. Save them in s and t respectively
+curl -c - -X POST --user "okd-client:okd-secret" -d "grant_type=password&username=Asif&password=asif" "http://127.0.0.1:8082/HelloWorldExample/oauth/token" 
+## With the auth token and sesison id send request to an API
+curl -i -H "Accept: application/json" -H "Authorization: Bearer $t" --cookie "JSESSIONID=$s" -X GET "http://127.0.0.1:8082/HelloWorldExample/okd/v1/clean"
