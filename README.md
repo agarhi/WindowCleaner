@@ -45,6 +45,14 @@ docker login -u developer -p $(oc whoami -t) $(minishift openshift registry)
 6. To login to the DB from minishift env
    oc rsh mysql-1-g4phb
    mysql -u root -p
+   NOTE: mysql-1-g4phb is the pod name for mysql
+
+   NOTE: A DB cannot be exposed to outside world like a web app. You have to use port forwarding. More here: https://blog.openshift.com/openshift-connecting-database-using-port-forwarding/
+   Command: 
+	oc port-forward <pod-name> <local-port>:<remote:port>
+	oc port-forward database-1-9xv8n 13306:3306
+   Where port-forward database-1-9xv8n is the pod name, 133036 is the local port and 3306 is the port in OpenShift
+  
 
 # Minishift Spring boot app from docker image
 oc new-app -e spring_datasource_url=jdbc:mysql://172.30.234.91:3306/okddb --docker-image="docker.io/agarhi/sb-ms-ms:trail3"
@@ -64,6 +72,8 @@ Will give you the route name, suppose route name is abcxyz - you just type http:
 oc delete deploymentconfigs sb-ms-ms
 oc delete svc sb-ms-ms
 oc delete pod <pod-name>
+
+Sometimes pods will recreate after deletion, for that oc get deploymentconfigs and delete each deploymentconfig and pods will delete
 
 # Some helpful curl commands to invoke the application
 ## This command prints both JSESSIONID cookie and auth token. Save them in s and t respectively
