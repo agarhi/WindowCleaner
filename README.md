@@ -80,3 +80,50 @@ Sometimes pods will recreate after deletion, for that oc get deploymentconfigs a
 curl -c - -X POST --user "okd-client:okd-secret" -d "grant_type=password&username=Asif&password=asif" "http://127.0.0.1:8082/HelloWorldExample/oauth/token" 
 ## With the auth token and sesison id send request to an API
 curl -i -H "Accept: application/json" -H "Authorization: Bearer $t" --cookie "JSESSIONID=$s" -X GET "http://127.0.0.1:8082/HelloWorldExample/okd/v1/clean"
+
+# Redis local set up
+https://redis.io/topics/quickstart
+## I unzipped inside /Users/asif.garhi/redis-stable
+## the last command didn't work so I looked at https://stackoverflow.com/questions/47195029/how-to-run-the-equivalent-of-sudo-update-rc-d-redis-6379-defaults-in-centos and then this https://community.pivotal.io/s/article/How-to-install-and-use-Redis-on-Linux but I didn't follow this link becaue it seems I have done most of it already
+
+## REDIS minishift set up YAYY !!
+# Inside minishift start
+docker pull redis
+# Above gets redis image from https://hub.docker.com/_/redis and puts it in local minishift space
+
+# This will deploy it on Minishift and also start the server
+oc new-app --docker-image=redis
+
+# Not totally sure if this is needed but I did it
+oc expose svc/redis
+
+# Login to the instance from minishift
+oc rsh redis-1-pzph8 
+(redis-1-pzph8 is the pod name for redis)
+And just start using redis-cli e.g. :
+
+$ redis-cli set key value
+OK
+$ redis-cli get key
+"value"
+$ 
+
+# To know the IP:port of redis within MS (Minishift):
+
+MLJ020G8WL:Downloads asif.garhi$ oc get svc
+NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+redis                          ClusterIP   172.30.44.110   <none>        6379/TCP   1h
+window-cleaner-testredisconn   ClusterIP   172.30.33.62    <none>        8090/TCP   27s
+
+# Not sure if getting svc requires oc expose svc/redis; I think not but not sure.
+
+# Now within a Spring Boot image that is running on same MS you can simply connect using this host and port
+# Look at https://github.com/agarhi/WindowCleanerTestRedisConnectivity; command used: 
+oc new-app -e spring_redis_host=172.30.44.110 -e spring_redis_port=6379 --docker-image="docker.io/agarhi/window-cleaner-testredisconn:1.0.0.1"
+ 
+
+######################################################################################################################################################
+Example of how you pass env var to SB:
+- java -Dspring_datasource_url="jdbc:mysql://localhost:3306/okddb?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=PST" -jar target/WindowCleaner-0.0.1-SNAPSHOT.jar
+- java -Dspring_redis_host=localhost -Dspring_redis_port=6379 -jar target/WindowCleanerTestRedisConn-0.0.1-SNAPSHOT.jar
+######################################################################################################################################################
